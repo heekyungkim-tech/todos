@@ -11,17 +11,35 @@
     <main>
         <a href="/"><p class="head_img"></p></a>
         <h1>Todo App</h1>
-        <p>{{todos}}</p>
-        <p>{{data2}}</p>
         <img src="static/images/todo.png" alt="todo">
         <h4>나를 성장시키는 메모</h4>
         <br>
     <form action="/add" method="post">
         <!-- <textarea name="task" rows="5" placeholder="Enter your task" id="task" required></textarea> -->
         <textarea name="task" rows="5" placeholder="Enter your task" id="task"></textarea>
-        <button type="submit" id="add_task">
-          Add
-        </button>
+        <button type="submit" id="add_task">Add</button>
     </form>
+
+    <br>
+    <h2>Tasks</h2>
+
+    <div>
+        <!--todos 테이블 전체 데이터 랜더링-->
+        {% for todo in todos %}
+            <div class="task">
+                <!--todo.complated=True 또는 False 구분해서 표시-->
+                {% if todo.completed %}
+                    <strike>{{ todo.task }}</strike>
+                {% else %}
+                    {{ todo.task }}
+                {% endif %}
+                <small>
+                    <a href="edit/{{ todo.id }}">Edit</a>
+                    <a href="delete/{{ todo.id }}">Delete</a>
+                </small>
+            </div>
+        {% endfor %}
+    </div>
+    
 </body>
 </html>

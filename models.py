@@ -7,4 +7,5 @@ class Todo(Base):
     task = Column(Text)
     completed = Column(Boolean, default=False)
 
-    
+    def __repr__(self):
+        return '<Todo %r>' % (self.id)
