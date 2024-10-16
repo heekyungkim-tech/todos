@@ -13,7 +13,8 @@ import uvicorn
 # FastAPI() 객체 생성
 app = FastAPI()
 
-# models에 정의한 모든 클래스, 연결한 DB엔진에 테이블로 생성
+# DB 엔진 연결
+# -> models.py에 정의한 클래스를 통해 db에 테이블 생성
 models.Base.metadata.create_all(bind=engine)
 
 def get_db():
@@ -27,26 +28,33 @@ def get_db():
 abs_path = os.path.dirname(os.path.realpath(__file__))
 # print(abs_path)
 
-# html 템플릿 폴더를 지정하여 jinja템플릿 객체 생성
+# html 문서를 위한 jinja템플릿 객체 생성
 #templates = Jinja2Templates(directory="templates")
 templates = Jinja2Templates(directory=f"{abs_path}/templates")
 
 # static 폴더(정적파일 폴더)를 app에 연결
+## 정적파일(static) 종류(image, css, js)
 # app.mount("/static", StaticFiles(directory=f"static"), name="static")
 app.mount("/static", StaticFiles(directory=f"{abs_path}/static"), name="static")
 
 # localhost:8000/
 @app.get("/")
 async def home(request: Request, db: Session = Depends(get_db)):
+    # db 객체 생성, 세션연결하기 <- 의존성 주임으로 처리
     # 테이블 조회
     todos = db.query(models.Todo).order_by(models.Todo.id.desc())
+
+    # db 조회한 결과를 출력함
+    # for todo in todos:
+    #     print(todo.id, todo.task, todo.completed)
+
     return templates.TemplateResponse("index.html",
                                       {"request": request,
                                        "todos": todos})
 
 @app.post("/add")
 async def add(request: Request, task: str = Form(...), db: Session = Depends(get_db)):
-   # 클라이언트가 textarea에 입력 데이터 넣으면
+   # 클라이언트가 textarea에 입력 데이터 넘어온ㄴ것 확인
    print(task)
    # 클라이언트에서 넘어온 task를 Todo 객체로 생성
    todo = models.Todo(task=task)
@@ -55,7 +63,7 @@ async def add(request: Request, task: str = Form(...), db: Session = Depends(get
    db.add(todo)
    # db에 실제 저장, commit
    db.commit()
-
+   # home 엔드포인함수로 제어권을 넘김
    return RedirectResponse(url=app.url_path_for("home"), status_code=status.HTTP_303_SEE_OTHER)
 
 @app.get("/delete/{todo_id}")
@@ -65,11 +73,13 @@ async def add(request: Request, todo_id: int, db: Session = Depends(get_db)):
     db.commit()
     return RedirectResponse(url=app.url_path_for("home"), status_code=status.HTTP_303_SEE_OTHER)
 
+# todo 수정을 위한 조회
 @app.get("/edit/{todo_id}")
 async def add(request: Request, todo_id: int, db: Session = Depends(get_db)):
     todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
     return templates.TemplateResponse("edit.html", {"request": request, "todo": todo})
 
+# todo 업데이트처리
 @app.post("/edit/{todo_id}")
 async def add(request: Request, todo_id: int, task: str = Form(...), completed: bool = Form(False), db: Session = Depends(get_db)):
     todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
